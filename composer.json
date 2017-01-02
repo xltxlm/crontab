@@ -1,0 +1,28 @@
+{
+  "name": "xltxlm/crontab",
+  "description": "死循环任务调度编排，保证任务不死机",
+  "authors": [
+    {
+      "name": "xltxlm",
+      "email": "xltxlm@qq.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.0",
+    "xltxlm/helper": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "xltxlm\\crontab\\": [
+        "src/"
+      ]
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "xltxlm\\crontab\\": [
+        "./"
+      ]
+    }
+  }
+}
