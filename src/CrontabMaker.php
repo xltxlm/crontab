@@ -8,6 +8,9 @@
 
 namespace xltxlm\crontab\src;
 
+use xltxlm\crontab\CrontabLock;
+use xltxlm\helper\Hclass\ClassNameFromFile;
+
 /**
  * 把集成 CrontabLock 的类集合在一起生成运行脚本
  * Class CrontabMaker.
@@ -38,10 +41,24 @@ final class CrontabMaker
     }
 
     /**
-     * 生成执行的脚本
+     * 生成执行的脚本.
      */
     public function __invoke()
     {
-        file_put_contents($this->getDir() . '/entrypoint.sh', "");
+        ob_start();
+        echo "#!/usr/bin/env bash\n";
+        echo "cd " . $this->getDir() . "\n";
+        $RecursiveDirectoryIterator = new \RecursiveIteratorIterator((new \RecursiveDirectoryIterator($this->getDir())));
+        /** @var \SplFileInfo $item */
+        foreach ($RecursiveDirectoryIterator as $item) {
+            $classNameFromFile = (new ClassNameFromFile())
+                ->setFilePath($item->getPathname());
+            if (!in_array(CrontabLock::class, $classNameFromFile->getTraits())) {
+                continue;
+            }
+            $path = strtr($item->getPathname(), [$this->getDir() => "", '\\' => '/']);
+            echo "php .$path 2>&1 >>entrypoint.log &\n";
+        }
+        file_put_contents($this->getDir() . '/entrypoint.sh', ob_get_clean());
     }
 }
