@@ -19,6 +19,28 @@ final class CrontabMaker
 {
     /** @var string 定时任务类集合所在的目录 */
     protected $dir = '';
+    /** @var string Inotifywait 监控脚本的位置 */
+    protected $InotifywaitSHPath = '';
+
+    /**
+     * @return string
+     */
+    public function getInotifywaitSHPath(): string
+    {
+        return $this->InotifywaitSHPath;
+    }
+
+    /**
+     * @param string $InotifywaitSHPath
+     *
+     * @return CrontabMaker
+     */
+    public function setInotifywaitSHPath(string $InotifywaitSHPath): CrontabMaker
+    {
+        $this->InotifywaitSHPath = $InotifywaitSHPath;
+
+        return $this;
+    }
 
     /**
      * @return string
@@ -47,7 +69,8 @@ final class CrontabMaker
     {
         ob_start();
         echo "#!/usr/bin/env bash\n";
-        echo "cd " . $this->getDir() . "\n";
+        echo "cd `dirname $0`\n";
+        echo "while test \"1\" = \"1\"\ndo\n";
         $RecursiveDirectoryIterator = new \RecursiveIteratorIterator((new \RecursiveDirectoryIterator($this->getDir())));
         /** @var \SplFileInfo $item */
         foreach ($RecursiveDirectoryIterator as $item) {
@@ -56,9 +79,23 @@ final class CrontabMaker
             if (!in_array(CrontabLock::class, $classNameFromFile->getTraits())) {
                 continue;
             }
-            $path = strtr($item->getPathname(), [$this->getDir() => "", '\\' => '/']);
-            echo "php .$path 2>&1 >>entrypoint.log &\n";
+            $path = strtr($item->getPathname(), [$this->getDir() => '', '\\' => '/']);
+            echo "flock -xn .$path.flcok -c \" php .$path 2>&1 >>entrypoint.log &\" \n";
         }
+        $inotifywaitSHPath = strtr(realpath($this->getInotifywaitSHPath()), [$this->getDir() => '', '\\' => '/']);
+        if ($inotifywaitSHPath) {
+            //得到Inotifywait的相对路径
+            $getInotifywaitSHPaths = explode("/", strtr(realpath($this->getInotifywaitSHPath()), ['\\' => '/']));
+            $getDirs = explode("/", strtr($this->getDir(), ['\\' => '/']));
+            $array_intersect=array_intersect($getInotifywaitSHPaths,$getDirs);
+            $array_intersect1=array_diff($getDirs,$getInotifywaitSHPaths);
+            $array_intersect2=array_diff($getInotifywaitSHPaths,$array_intersect);
+            $relatePath=str_repeat('../',count($array_intersect1)).join("/",$array_intersect2);
+            echo "flock -xn $relatePath.flcok -c \"$relatePath 2>&1 >>entrypoint.log &\" \n";
+        }
+        echo "sleep 1\n";
+        echo "echo -n .\n";
+        echo "done\n";
         file_put_contents($this->getDir() . '/entrypoint.sh', ob_get_clean());
     }
 }

@@ -19,6 +19,7 @@ class CrontabMakerTest extends TestCase
     {
         (new CrontabMaker())
             ->setDir(__DIR__)
+            ->setInotifywaitSHPath(__DIR__ . "/../src/Inotifywait.sh")
             ->__invoke();
     }
 }
