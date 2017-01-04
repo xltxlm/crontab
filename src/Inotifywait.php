@@ -9,6 +9,7 @@
 namespace xltxlm\crontab\src;
 
 include_once __DIR__ . '/../vendor/autoload.php';
+include_once __DIR__ . '/../../vendor/autoload.php';
 
 /**
  * 监听文件的变化

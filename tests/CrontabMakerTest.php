@@ -11,6 +11,7 @@ namespace xltxlm\crontab\tests;
 
 use PHPUnit\Framework\TestCase;
 use xltxlm\crontab\src\CrontabMaker;
+use xltxlm\crontab\Unit\Tail;
 
 class CrontabMakerTest extends TestCase
 {
@@ -18,8 +19,14 @@ class CrontabMakerTest extends TestCase
     public function test()
     {
         (new CrontabMaker())
-            ->setDir(__DIR__)
-            ->setInotifywaitSHPath(__DIR__ . "/../src/Inotifywait.sh")
+            ->setCrontabDir(__DIR__)
+            ->setInotifywaitSHPath(__DIR__."/../src/Inotifywait.sh")
+            ->setConfigDir(__DIR__)
+            ->setTails(
+                (new Tail())
+                    ->setClassFilePath(__DIR__."/../src/LogFile/PhpErrorReport.php")
+                    ->setFile('/opt/log/php_error.log')
+            )
             ->__invoke();
     }
 }
