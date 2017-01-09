@@ -12,7 +12,7 @@ use xltxlm\mail\MailSmtp;
 use xltxlm\mail\Util\MailUserInfo;
 
 include_once __DIR__.'/../../vendor/autoload.php';
-include_once __DIR__.'/../../../vendor/autoload.php';
+include_once __DIR__.'/../../../../autoload.php';
 
 /**
  * 凡是文件出现一行内容,就是错误
