@@ -15,6 +15,28 @@ class Tail
     protected $file = '';
     /** @var string 类文件的路径 */
     protected $classFilePath = '';
+    /** @var string smtp服务器配置类的文件位置 */
+    protected $mailClass = '';
+
+    /**
+     * @return string
+     */
+    public function getMailClass(): string
+    {
+        return $this->mailClass;
+    }
+
+    /**
+     * @param string $mailClass
+     *
+     * @return Tail
+     */
+    public function setMailClass(string $mailClass): Tail
+    {
+        $this->mailClass = $mailClass;
+
+        return $this;
+    }
 
     /**
      * @return string
@@ -31,7 +53,7 @@ class Tail
      */
     public function setClassFilePath(string $classFilePath): Tail
     {
-        $this->classFilePath = strtr($classFilePath, [dirname(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)[0]['file']).'/' => ""]);
+        $this->classFilePath = strtr($classFilePath, [dirname(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)[0]['file']).'/' => '']);
 
         return $this;
     }
