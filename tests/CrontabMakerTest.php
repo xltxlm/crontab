@@ -10,7 +10,7 @@ namespace xltxlm\crontab\tests;
 
 
 use PHPUnit\Framework\TestCase;
-use xltxlm\crontab\src\CrontabMaker;
+use xltxlm\crontab\CrontabMaker;
 use xltxlm\crontab\Unit\Tail;
 
 class CrontabMakerTest extends TestCase
@@ -24,7 +24,7 @@ class CrontabMakerTest extends TestCase
             ->setConfigDir(__DIR__)
             ->setTails(
                 (new Tail())
-                    ->setClassFilePath(__DIR__."/../src/LogFile/PhpErrorReport.php")
+                    ->setClassFilePath(__DIR__."/../src/LogFile/ErrorLog.php")
                     ->setFile('/opt/log/php_error.log')
             )
             ->__invoke();

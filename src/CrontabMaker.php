@@ -6,7 +6,7 @@
  * Time: 下午 1:38.
  */
 
-namespace xltxlm\crontab\src;
+namespace xltxlm\crontab;
 
 use Composer\Autoload\ClassLoader;
 use xltxlm\config\TestConfig;
