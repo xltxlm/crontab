@@ -38,7 +38,7 @@ final class ErrorLog
             ->setRedisConfig($redisConfig)
             ->setKey(__FILE__)
             ->setValue(date('Y-m-d H:i:s'))
-            ->setExpire(1)
+            ->setExpire(5)
             ->__invoke();
         if (!$locked) {
             return false;
