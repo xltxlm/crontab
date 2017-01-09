@@ -12,8 +12,7 @@ use xltxlm\mail\Config\MailConfig;
 use xltxlm\mail\MailSmtp;
 use xltxlm\mail\Util\MailUserInfo;
 
-include_once __DIR__.'/../../vendor/autoload.php';
-include_once __DIR__.'/../../../../autoload.php';
+eval("include_once '/var/www/html/vendor/autoload.php';");
 
 /**
  * 服务器心跳,一小时推送一次

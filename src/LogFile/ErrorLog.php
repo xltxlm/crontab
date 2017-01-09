@@ -9,31 +9,26 @@
 namespace xltxlm\crontab\LogFile;
 
 use xltxlm\mail\MailSmtp;
-use xltxlm\mail\Util\MailUserInfo;
 use xltxlm\redis\Config\RedisConfig;
 use xltxlm\redis\LockKey;
 
-include_once __DIR__.'/../../vendor/autoload.php';
-include_once __DIR__.'/../../../../autoload.php';
+eval("include_once '/var/www/html/vendor/autoload.php';");
 
-/**
- * 凡是文件出现一行内容,就是错误
- * Class ErrorLog.
- */
 final class ErrorLog
 {
     use MailLoad;
+}
 
-    /**
-     * @return bool
-     */
-    public function __invoke()
-    {
-        //为了方式写错误,导致邮件高并发.加上redis锁
-        $redisConfig = new class() extends RedisConfig
-        {
-            protected $host = 'redis';
-        };
+$ErrorLog = (new ErrorLog);
+//为了方式写错误,导致邮件高并发.加上redis锁
+$redisConfig = new class() extends RedisConfig
+{
+    protected $host = 'redis';
+};
+
+$fp = fopen('php://stdin', 'r');
+if ($fp) {
+    while ($line = fgets($fp, 4096 * 10)) {
         $locked = (new LockKey())
             ->setRedisConfig($redisConfig)
             ->setKey(__FILE__)
@@ -41,34 +36,24 @@ final class ErrorLog
             ->setExpire(5)
             ->__invoke();
         if (!$locked) {
-            return false;
+            continue;
         }
-
-        $fp = fopen('php://stdin', 'r');
-        if ($fp) {
-            while ($line = fgets($fp, 4096 * 10)) {
-                if ($this->getErrorstr()) {
-                    if (strpos($line, $this->getErrorstr()) === false) {
-                        continue;
-                    }
-                }
-                if ($line[0] == '{') {
-                    $body = var_export(json_decode($line, true), true);
-                } else {
-                    $body = $line;
-                }
-                (new MailSmtp())
-                    ->setMailConfig($this->getMailConfig())
-                    ->setTitle($_SERVER['HOSTNAME'].'的错误邮件:'.$this->getFilepath())
-                    ->setBody($body)
-                    ->setTo($this->getMailUserInfo())
-                    ->__invoke();
+        if ($ErrorLog->getErrorstr()) {
+            if (strpos($line, $ErrorLog->getErrorstr()) === false) {
+                continue;
             }
-            fclose($fp);
         }
-
-        return true;
+        if ($line[0] == '{') {
+            $body = var_export(json_decode($line, true), true);
+        } else {
+            $body = $line;
+        }
+        (new MailSmtp())
+            ->setMailConfig($ErrorLog->getMailConfig())
+            ->setTitle($_SERVER['HOSTNAME'].'的错误邮件:'.$ErrorLog->getFilepath())
+            ->setBody($body)
+            ->setTo($ErrorLog->getMailUserInfo())
+            ->__invoke();
     }
 }
-
-(new ErrorLog())();
+fclose($fp);
