@@ -23,7 +23,7 @@ class Tail
      */
     public function getMailClass(): string
     {
-        return $this->mailClass;
+        return urlencode($this->mailClass);
     }
 
     /**

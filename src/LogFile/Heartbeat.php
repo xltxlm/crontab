@@ -8,6 +8,7 @@
 
 namespace xltxlm\crontab\LogFile;
 
+use xltxlm\mail\Config\MailConfig;
 use xltxlm\mail\MailSmtp;
 use xltxlm\mail\Util\MailUserInfo;
 
@@ -18,23 +19,38 @@ include_once __DIR__.'/../../../../autoload.php';
  * 服务器心跳,一小时推送一次
  * Class Heartbeat.
  */
-class Heartbeat
+final class Heartbeat
 {
-    use MailLoad;
+    /** @var MailConfig MailConfig */
+    protected $mailConfig;
+
+    /**
+     * @return MailConfig
+     */
+    public function getMailConfig(): MailConfig
+    {
+        return $this->mailConfig;
+    }
+
+    /**
+     * @param MailConfig $mailConfig
+     * @return Heartbeat
+     */
+    public function setMailConfig(MailConfig $mailConfig): Heartbeat
+    {
+        $this->mailConfig = $mailConfig;
+        return $this;
+    }
+
 
     public function __invoke()
     {
-        while (true) {
-            $shell = shell_exec('ps aux | grep php | grep -v grep | grep -v php-fpm');
-            (new MailSmtp())
-                ->setMailConfig($this->getMailConfig())
-                ->setTitle($_SERVER['HOSTNAME'].'-服务器心跳')
-                ->setBody(date('Y-m-d H:i:s').$shell)
-                ->setTo((new MailUserInfo())->setEmail('xltxlm@qq.com')->setNickname('夏琳泰'))
-                ->__invoke();
-            sleep(3600);
-        }
+        $shell = shell_exec('ps aux | grep php | grep -v grep | grep -v php-fpm');
+        (new MailSmtp())
+            ->setMailConfig($this->getMailConfig())
+            ->setTitle($_SERVER['HOSTNAME'].'-服务器心跳')
+            ->setBody(date('Y-m-d H:i:s').$shell)
+            ->setTo((new MailUserInfo())->setEmail('xltxlm@qq.com')->setNickname('夏琳泰'))
+            ->__invoke();
     }
 }
-
-(new Heartbeat())();

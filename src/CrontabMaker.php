@@ -147,7 +147,7 @@ final class CrontabMaker
         }
         echo "\n\n#========3:日志文件变化跟踪===========\n\n";
         foreach ($this->getTails() as $tail) {
-            echo 'tail -f  '.$tail->getFile().' -n0  | php '.$tail->getClassFilePath().' mailConfig='.$tail->getMailClass()." &\n";
+            echo 'tail -f  '.$tail->getFile().' | php '.$tail->getClassFilePath().' mailConfig='.$tail->getMailClass()." &\n";
         }
         echo "\n\n#========4:资源链接测试===========\n\n";
         $RecursiveDirectoryIterator = new \RecursiveIteratorIterator((new \RecursiveDirectoryIterator($this->getConfigDir())));
