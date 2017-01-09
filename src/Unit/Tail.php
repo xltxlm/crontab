@@ -17,6 +17,50 @@ class Tail
     protected $classFilePath = '';
     /** @var string smtp服务器配置类的文件位置 */
     protected $mailClass = '';
+    /** @var string 接收方账户信息 */
+    protected $mailUserInfo = '';
+    /** @var string 特定的错误关键词 */
+    protected $errorstr = '';
+
+    /**
+     * @return string
+     */
+    public function getErrorstr(): string
+    {
+        return $this->errorstr;
+    }
+
+    /**
+     * @param string $errorstr
+     *
+     * @return Tail
+     */
+    public function setErrorstr(string $errorstr): Tail
+    {
+        $this->errorstr = $errorstr;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMailUserInfo(): string
+    {
+        return urlencode($this->mailUserInfo);
+    }
+
+    /**
+     * @param string $mailUserInfo
+     *
+     * @return Tail
+     */
+    public function setMailUserInfo(string $mailUserInfo): Tail
+    {
+        $this->mailUserInfo = $mailUserInfo;
+
+        return $this;
+    }
 
     /**
      * @return string

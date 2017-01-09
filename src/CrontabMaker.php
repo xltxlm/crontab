@@ -147,7 +147,10 @@ final class CrontabMaker
         }
         echo "\n\n#========3:日志文件变化跟踪===========\n\n";
         foreach ($this->getTails() as $tail) {
-            echo 'tail -f  '.$tail->getFile().' | php '.$tail->getClassFilePath().' mailConfig='.$tail->getMailClass()." &\n";
+            $relatePath = md5($tail->getFile());
+            echo "flock -xn $relatePath.flcok -c \"".'tail -f  '.$tail->getFile().' | php '.$tail->getClassFilePath().
+                ' mailConfig='.$tail->getMailClass()." mailUserInfo=".$tail->getMailUserInfo().
+                " errorstr='".$tail->getErrorstr()."' filepath=".array_shift(explode(' ', $tail->getFile()))."\" &\n";
         }
         echo "\n\n#========4:资源链接测试===========\n\n";
         $RecursiveDirectoryIterator = new \RecursiveIteratorIterator((new \RecursiveDirectoryIterator($this->getConfigDir())));
@@ -169,7 +172,7 @@ final class CrontabMaker
             }
         }
         echo "\n\n#========[END]===========\n\n";
-        echo "sleep 1\n";
+        echo "sleep 10\n";
         echo "echo -n .\n";
         echo "done\n";
         file_put_contents($this->getCrontabDir().'/entrypoint.sh', ob_get_clean());

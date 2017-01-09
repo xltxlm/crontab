@@ -47,6 +47,11 @@ final class ErrorLog
         $fp = fopen('php://stdin', 'r');
         if ($fp) {
             while ($line = fgets($fp, 4096 * 10)) {
+                if ($this->getErrorstr()) {
+                    if (strpos($line, $this->getErrorstr()) === false) {
+                        continue;
+                    }
+                }
                 if ($line[0] == '{') {
                     $body = var_export(json_decode($line, true), true);
                 } else {
@@ -54,9 +59,9 @@ final class ErrorLog
                 }
                 (new MailSmtp())
                     ->setMailConfig($this->getMailConfig())
-                    ->setTitle('来自'.$_SERVER['HOSTNAME'].'的错误资源日志邮件')
+                    ->setTitle($_SERVER['HOSTNAME'].'的错误邮件:'.$this->getFilepath())
                     ->setBody($body)
-                    ->setTo((new MailUserInfo())->setEmail('xltxlm@qq.com')->setNickname('夏琳泰'))
+                    ->setTo($this->getMailUserInfo())
                     ->__invoke();
             }
             fclose($fp);

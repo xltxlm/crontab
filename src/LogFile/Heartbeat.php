@@ -23,6 +23,8 @@ final class Heartbeat
 {
     /** @var MailConfig MailConfig */
     protected $mailConfig;
+    /** @var  MailUserInfo 账户信息 */
+    protected $MailUserInfo;
 
     /**
      * @return MailConfig
@@ -42,6 +44,24 @@ final class Heartbeat
         return $this;
     }
 
+    /**
+     * @return MailUserInfo
+     */
+    public function getMailUserInfo(): MailUserInfo
+    {
+        return $this->MailUserInfo;
+    }
+
+    /**
+     * @param MailUserInfo $MailUserInfo
+     * @return Heartbeat
+     */
+    public function setMailUserInfo(MailUserInfo $MailUserInfo): Heartbeat
+    {
+        $this->MailUserInfo = $MailUserInfo;
+        return $this;
+    }
+
 
     public function __invoke()
     {
@@ -50,7 +70,7 @@ final class Heartbeat
             ->setMailConfig($this->getMailConfig())
             ->setTitle($_SERVER['HOSTNAME'].'-服务器心跳')
             ->setBody(date('Y-m-d H:i:s').$shell)
-            ->setTo((new MailUserInfo())->setEmail('xltxlm@qq.com')->setNickname('夏琳泰'))
+            ->setTo($this->getMailUserInfo())
             ->__invoke();
     }
 }
