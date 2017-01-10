@@ -32,7 +32,6 @@ if ($fp) {
         $locked = (new LockKey())
             ->setRedisConfig($redisConfig)
             ->setKey(__FILE__)
-            ->setValue(date('Y-m-d H:i:s'))
             ->setExpire(5)
             ->__invoke();
         if (!$locked) {

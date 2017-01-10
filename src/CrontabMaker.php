@@ -8,9 +8,7 @@
 
 namespace xltxlm\crontab;
 
-use Composer\Autoload\ClassLoader;
 use xltxlm\config\TestConfig;
-use xltxlm\crontab\CrontabLock;
 use xltxlm\crontab\Unit\Tail;
 use xltxlm\helper\Hclass\ClassNameFromFile;
 
@@ -131,7 +129,7 @@ final class CrontabMaker
                 continue;
             }
             $path = strtr($item->getPathname(), [$this->getCrontabDir() => '', '\\' => '/']);
-            echo "flock -xn .$path.flcok -c \" php .$path 2>&1 >>entrypoint.log\" & \n";
+            echo 'flock -xn '.md5($path).".flcok -c \" php .$path 2>&1 >>entrypoint.log\" & \n";
         }
         echo "\n\n#========2:项目文件变化监控===========\n\n";
         $inotifywaitSHPath = strtr(realpath($this->getInotifywaitSHPath()), [$this->getCrontabDir() => '', '\\' => '/']);
@@ -149,7 +147,7 @@ final class CrontabMaker
         foreach ($this->getTails() as $tail) {
             $relatePath = md5($tail->getFile());
             echo "flock -xn $relatePath.flcok -c \"".'tail -f  '.$tail->getFile().' | php '.$tail->getClassFilePath().
-                ' mailConfig='.$tail->getMailClass()." mailUserInfo=".$tail->getMailUserInfo().
+                ' mailConfig='.$tail->getMailClass().' mailUserInfo='.$tail->getMailUserInfo().
                 " errorstr='".$tail->getErrorstr()."' filepath=".array_shift(explode(' ', $tail->getFile()))."\" &\n";
         }
         echo "\n\n#========4:资源链接测试===========\n\n";
