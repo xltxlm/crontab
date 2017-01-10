@@ -43,7 +43,7 @@ trait CrontabLock
 
     protected function log($str)
     {
-        fwrite($this->fp, $str."\n");
+        fwrite($this->fp, '['.date('Y-m-d H:i:s').']'.$str."\n");
     }
 
     /**
