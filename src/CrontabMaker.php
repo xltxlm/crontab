@@ -129,7 +129,8 @@ final class CrontabMaker
                 continue;
             }
             $path = strtr($item->getPathname(), [$this->getCrontabDir() => '', '\\' => '/']);
-            echo 'flock -xn '.md5($path).".flcok -c \" php .$path 2>&1 >>entrypoint.log\" & \n";
+            //echo 'flock -xn '.md5($path).".flcok -c \" echo '.$path [ok]'   >>entrypoint.log\" & \n";
+            echo 'flock -xn '.md5($path).".flcok -c \" php .$path\" & \n";
         }
         echo "\n\n#========2:项目文件变化监控===========\n\n";
         $inotifywaitSHPath = strtr(realpath($this->getInotifywaitSHPath()), [$this->getCrontabDir() => '', '\\' => '/']);
@@ -151,6 +152,7 @@ final class CrontabMaker
                 " errorstr='".$tail->getErrorstr()."' filepath=".array_shift(explode(' ', $tail->getFile()))."\" &\n";
         }
         echo "\n\n#========4:资源链接测试===========\n\n";
+        echo "sleep 10\n";
         $RecursiveDirectoryIterator = new \RecursiveIteratorIterator((new \RecursiveDirectoryIterator($this->getConfigDir())));
         foreach ($RecursiveDirectoryIterator as $item) {
             $classNameFromFile = (new ClassNameFromFile())
@@ -170,7 +172,6 @@ final class CrontabMaker
             }
         }
         echo "\n\n#========[END]===========\n\n";
-        echo "sleep 10\n";
         echo "echo -n .\n";
         echo "done\n";
         file_put_contents($this->getCrontabDir().'/entrypoint.sh', ob_get_clean());
