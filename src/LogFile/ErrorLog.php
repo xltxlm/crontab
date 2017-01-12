@@ -29,16 +29,9 @@ $redisConfig = new class() extends RedisConfig
 $fp = fopen('php://stdin', 'r');
 if ($fp) {
     while ($line = fgets($fp, 4096 * 10)) {
-        $locked = (new LockKey())
-            ->setRedisConfig($redisConfig)
-            ->setKey(__FILE__)
-            ->setExpire(5)
-            ->__invoke();
-        if (!$locked) {
-            continue;
-        }
         if ($ErrorLog->getErrorstr()) {
             if (strpos($line, $ErrorLog->getErrorstr()) === false) {
+                log("没有包含关键词:".$ErrorLog->getErrorstr().":$line");
                 continue;
             }
         }
@@ -47,12 +40,27 @@ if ($fp) {
         } else {
             $body = $line;
         }
+        $locked = (new LockKey())
+            ->setRedisConfig($redisConfig)
+            ->setKey(__FILE__)
+            ->setExpire(5)
+            ->__invoke();
+        if (!$locked) {
+            log("redis锁跳过:$line");
+            continue;
+        }
+        log("正常发送:".$body);
         (new MailSmtp())
             ->setMailConfig($ErrorLog->getMailConfig())
-            ->setTitle($_SERVER['HOSTNAME'].'的错误邮件:'.$ErrorLog->getFilepath())
+            ->setTitle($_SERVER['HOSTNAME'].'的错误邮件:'.basename($ErrorLog->getFilepath()))
             ->setBody($body)
             ->setTo($ErrorLog->getMailUserInfo())
             ->__invoke();
     }
 }
 fclose($fp);
+
+function log($str)
+{
+    file_put_contents(getcwd().'/'.basename(__FILE__).'.lock', '['.date('Y-m-d H:i:s').']'.$str."\n", FILE_APPEND);
+}
