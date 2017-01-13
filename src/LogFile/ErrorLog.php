@@ -30,7 +30,7 @@ $fp = fopen('php://stdin', 'r');
 if ($fp) {
     while ($line = fgets($fp, 4096 * 10)) {
         if ($ErrorLog->getErrorstr()) {
-            if (strpos(strtolower($line), strtotime($ErrorLog->getErrorstr())) === false) {
+            if (strpos(strtolower($line), strtolower($ErrorLog->getErrorstr())) === false) {
                 log("没有包含关键词:".$ErrorLog->getErrorstr().":$line");
                 continue;
             }
