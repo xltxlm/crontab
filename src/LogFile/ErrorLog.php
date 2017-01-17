@@ -43,7 +43,7 @@ if ($fp) {
         $locked = (new LockKey())
             ->setRedisConfig($redisConfig)
             ->setKey(__FILE__)
-            ->setExpire(5)
+            ->setExpire(30)
             ->__invoke();
         if (!$locked) {
             log("redis锁跳过:$line");
