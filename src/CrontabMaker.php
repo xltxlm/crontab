@@ -22,10 +22,32 @@ final class CrontabMaker
     protected $crontabDir = '';
     /** @var string 配置文件夹 */
     protected $configDir = '';
+    /** @var array 测试依赖的外部环境的 */
+    protected $configClass = [];
     /** @var string Inotifywait 监控脚本的位置 */
     protected $InotifywaitSHPath = '';
     /** @var Tail[] 文件跟踪 */
     protected $tails = [];
+
+    /**
+     * @return array
+     */
+    public function getConfigClass(): array
+    {
+        return $this->configClass;
+    }
+
+    /**
+     * @param string $configClass
+     *
+     * @return CrontabMaker
+     */
+    public function setConfigClass(string $configClass): CrontabMaker
+    {
+        $this->configClass[] = $configClass;
+
+        return $this;
+    }
 
     /**
      * @return string
@@ -92,7 +114,7 @@ final class CrontabMaker
      */
     public function getCrontabDir(): string
     {
-        return $this->crontabDir;
+        return realpath($this->crontabDir);
     }
 
     /**
@@ -120,6 +142,9 @@ final class CrontabMaker
         $RecursiveDirectoryIterator = new \RecursiveIteratorIterator((new \RecursiveDirectoryIterator($this->getCrontabDir())));
         /** @var \SplFileInfo $item */
         foreach ($RecursiveDirectoryIterator as $item) {
+            if (strpos($item, '.php') === false) {
+                continue;
+            }
             $classNameFromFile = (new ClassNameFromFile())
                 ->setFilePath($item->getPathname());
             if (!$classNameFromFile->getClassName()) {
@@ -129,12 +154,11 @@ final class CrontabMaker
                 continue;
             }
             $path = strtr($item->getPathname(), [$this->getCrontabDir() => '', '\\' => '/']);
-            //echo 'flock -xn '.md5($path).".flcok -c \" echo '.$path [ok]'   >>entrypoint.log\" & \n";
             echo 'flock -xn '.md5($path).".flcok -c \" php .$path\" & \n";
         }
         echo "\n\n#========2:项目文件变化监控===========\n\n";
         $inotifywaitSHPath = strtr(realpath($this->getInotifywaitSHPath()), [$this->getCrontabDir() => '', '\\' => '/']);
-        if ($inotifywaitSHPath) {
+        if ($this->getInotifywaitSHPath() && $inotifywaitSHPath) {
             //得到Inotifywait的相对路径
             $getInotifywaitSHPaths = explode('/', strtr(realpath($this->getInotifywaitSHPath()), ['\\' => '/']));
             $getDirs = explode('/', strtr($this->getCrontabDir(), ['\\' => '/']));
@@ -153,27 +177,50 @@ final class CrontabMaker
         }
         echo "\n\n#========4:资源链接测试===========\n\n";
         echo "sleep 10\n";
-        $RecursiveDirectoryIterator = new \RecursiveIteratorIterator((new \RecursiveDirectoryIterator($this->getConfigDir())));
-        foreach ($RecursiveDirectoryIterator as $item) {
-            $classNameFromFile = (new ClassNameFromFile())
-                ->setFilePath($item->getPathname());
-            if (!$classNameFromFile->getClassName() || in_array(CrontabLock::class, $classNameFromFile->getTraits())) {
-                continue;
-            }
-            if (strpos(file_get_contents($item->getPathname()), 'autoload.php') !== false) {
-                continue;
-            }
-            eval('include_once $item->getPathname();');
-            $implementsInterface = (new \ReflectionClass($classNameFromFile->getClassName()))
-                ->implementsInterface(TestConfig::class);
-            if ($implementsInterface) {
-                $path = strtr($item->getPathname(), [$this->getConfigDir() => '', '\\' => '/']);
-                echo "php -r 'include \"/var/www/html/vendor/autoload.php\";include \".$path\";(new ".$classNameFromFile->getClassName().")->test(); ' & \n";
+        if ($this->getConfigDir()) {
+            $RecursiveDirectoryIterator = new \RecursiveIteratorIterator((new \RecursiveDirectoryIterator($this->getConfigDir())));
+            foreach ($RecursiveDirectoryIterator as $item) {
+                $classNameFromFile = (new ClassNameFromFile())
+                    ->setFilePath($item->getPathname());
+                if (!$classNameFromFile->getClassName() || in_array(CrontabLock::class, $classNameFromFile->getTraits())) {
+                    continue;
+                }
+                if (strpos(file_get_contents($item->getPathname()), 'autoload.php') !== false) {
+                    continue;
+                }
+                eval('include_once $item->getPathname();');
+                $implementsInterface = (new \ReflectionClass($classNameFromFile->getClassName()))
+                    ->implementsInterface(TestConfig::class);
+                if ($implementsInterface) {
+                    $path = strtr($item->getPathname(), [$this->getConfigDir() => '', '\\' => '/']);
+                    echo "php -r 'include \"/var/www/html/vendor/autoload.php\";include \".$path\";(new ".$classNameFromFile->getClassName().")->test(); ' & \n";
+                }
             }
         }
+
         echo "\n\n#========[END]===========\n\n";
         echo "echo -n .\n";
         echo "done\n";
+        file_put_contents($this->getCrontabDir().'/entrypoint.sh', ob_get_clean());
+    }
+
+    public function test()
+    {
+        ob_start();
+        echo "#!/usr/bin/env bash\n";
+        echo "cd `dirname $0`\n";
+        echo "echo \$HOST_TYPE\n";
+        echo "echo \$HOSTNAME\n";
+        /** @var \ReflectionClass $item */
+        foreach ($this->getConfigClass() as $item) {
+            $item = new \ReflectionClass($item);
+            $implementsInterface = $item
+                ->implementsInterface(TestConfig::class);
+            if ($implementsInterface) {
+                $ShortName = $item->getShortName();
+                echo "php -r 'ini_set(\"display_errors\", \"on\");include \"/var/www/html/vendor/autoload.php\";(new ".$item->getName().")->test(); echo \"+OK $ShortName\\n\";'  \n";
+            }
+        }
         file_put_contents($this->getCrontabDir().'/entrypoint.sh', ob_get_clean());
     }
 }
