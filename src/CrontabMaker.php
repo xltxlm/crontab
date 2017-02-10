@@ -221,6 +221,6 @@ final class CrontabMaker
                 echo "php -r 'ini_set(\"display_errors\", \"on\");include \"/var/www/html/vendor/autoload.php\";(new ".$item->getName().")->test(); echo \"+OK $ShortName\\n\";'  \n";
             }
         }
-        file_put_contents($this->getCrontabDir().'/entrypoint.sh', ob_get_clean());
+        file_put_contents($this->getCrontabDir().'/entrypointtest.sh', ob_get_clean());
     }
 }
