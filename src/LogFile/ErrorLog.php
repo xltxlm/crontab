@@ -14,18 +14,7 @@ use xltxlm\redis\LockKey;
 
 eval("include_once '/var/www/html/vendor/autoload.php';");
 
-final class ErrorLog
-{
-    use MailLoad;
-}
-
-$ErrorLog = (new ErrorLog);
-//为了方式写错误,导致邮件高并发.加上redis锁
-$redisConfig = new class() extends RedisConfig
-{
-    protected $host = 'redis';
-};
-
+$ErrorLog = (new MailLoadRequest);
 $fp = fopen('php://stdin', 'r');
 if ($fp) {
     while ($line = fgets($fp, 4096 * 10)) {
@@ -40,15 +29,13 @@ if ($fp) {
         } else {
             $body = $line;
         }
-        $locked = (new LockKey())
-            ->setRedisConfig($redisConfig)
-            ->setKey(__FILE__)
-            ->setExpire(30)
-            ->__invoke();
-        if (!$locked) {
-            log("redis锁跳过:$line");
+        //保存最后一次运行的时间
+        $time = file_get_contents(__DIR__.'/tmp');
+        if (time() - $time < 5) {
+            log("距离上一次时间间隔太小,跳过");
             continue;
         }
+        file_put_contents(__DIR__.'/tmp', time());
         log("正常发送:".$body);
         (new MailSmtp())
             ->setMailConfig($ErrorLog->getMailConfig())

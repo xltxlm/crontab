@@ -39,7 +39,7 @@ if (php_sapi_name() == 'cli') {
  * 加载邮件配置类
  * Class MailLoad.
  */
-trait MailLoad
+final class MailLoadRequest
 {
     use Request;
     /** @var string MailConfig */
@@ -102,7 +102,7 @@ trait MailLoad
     /**
      * @param MailUserInfo $MailUserInfo
      *
-     * @return MailLoad
+     * @return MailLoadRequest
      */
     public function setMailUserInfo($MailUserInfo)
     {
@@ -122,7 +122,7 @@ trait MailLoad
     /**
      * @param string $mailConfig
      *
-     * @return MailLoad
+     * @return MailLoadRequest
      */
     public function setMailConfig($mailConfig)
     {
