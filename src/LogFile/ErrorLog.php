@@ -9,8 +9,6 @@
 namespace xltxlm\crontab\LogFile;
 
 use xltxlm\mail\MailSmtp;
-use xltxlm\redis\Config\RedisConfig;
-use xltxlm\redis\LockKey;
 
 eval("include_once '/var/www/html/vendor/autoload.php';");
 
