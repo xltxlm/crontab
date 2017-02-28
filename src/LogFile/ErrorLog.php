@@ -29,7 +29,7 @@ if ($fp) {
         }
         //保存最后一次运行的时间
         $time = file_get_contents(__DIR__.'/tmp');
-        if (time() - $time < 5) {
+        if (time() - $time < 10) {
             log("距离上一次时间间隔太小,跳过");
             continue;
         }
