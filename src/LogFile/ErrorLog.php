@@ -37,7 +37,7 @@ if ($fp) {
         log("正常发送:".$body);
         (new MailSmtp())
             ->setMailConfig($ErrorLog->getMailConfig())
-            ->setTitle($_SERVER['HOSTNAME'].'的错误邮件:'.basename($ErrorLog->getFilepath()))
+            ->setTitle($_SERVER['HOSTNAME'].':'.basename($ErrorLog->getFilepath()))
             ->setBody($body)
             ->setTo($ErrorLog->getMailUserInfo())
             ->__invoke();
