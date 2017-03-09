@@ -16,6 +16,10 @@ $ErrorLog = (new MailLoadRequest);
 $fp = fopen('php://stdin', 'r');
 if ($fp) {
     while ($line = fgets($fp, 4096 * 10)) {
+        //在早上8点之前,不要发送任何错误信息,-没人处理
+        if (date('H') < '08') {
+            log("早上8点前不要发送通知邮件");
+        }
         if ($ErrorLog->getErrorstr()) {
             if (strpos(strtolower($line), strtolower($ErrorLog->getErrorstr())) === false) {
                 log("没有包含关键词:".$ErrorLog->getErrorstr().":$line");
