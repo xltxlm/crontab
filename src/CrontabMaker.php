@@ -154,7 +154,7 @@ final class CrontabMaker
                 continue;
             }
             $path = strtr($item->getPathname(), [$this->getCrontabDir() => '', '\\' => '/']);
-            echo 'flock -xn '.md5($path).".flcok -c \" php .$path\" & \n";
+            echo 'flock -xn '.md5($path).".flock -c \" php .$path\" & \n";
         }
         echo "\n\n#========2:项目文件变化监控===========\n\n";
         $inotifywaitSHPath = strtr(realpath($this->getInotifywaitSHPath()), [$this->getCrontabDir() => '', '\\' => '/']);
@@ -166,12 +166,12 @@ final class CrontabMaker
             $array_intersect1 = array_diff($getDirs, $getInotifywaitSHPaths);
             $array_intersect2 = array_diff($getInotifywaitSHPaths, $array_intersect);
             $relatePath = str_repeat('../', count($array_intersect1)).implode('/', $array_intersect2);
-            echo "flock -xn $relatePath.flcok -c \"$relatePath 2>&1 >>entrypoint.log\" & \n";
+            echo "flock -xn $relatePath.flock -c \"$relatePath 2>&1 >>entrypoint.log\" & \n";
         }
         echo "\n\n#========3:日志文件变化跟踪===========\n\n";
         foreach ($this->getTails() as $tail) {
             $relatePath = md5($tail->getFile());
-            echo "flock -xn $relatePath.flcok -c \"".'tail -f  '.$tail->getFile().' | php '.$tail->getClassFilePath().
+            echo "flock -xn $relatePath.flock -c \"".'tail -f  '.$tail->getFile().' | php '.$tail->getClassFilePath().
                 ' mailConfig='.$tail->getMailClass().' mailUserInfo='.$tail->getMailUserInfo().
                 " errorstr='".$tail->getErrorstr()."' filepath=".array_shift(explode(' ', $tail->getFile()))."\" &\n";
         }
