@@ -177,8 +177,29 @@ final class CrontabMaker
         }
         echo "\n\n#========4:资源链接测试===========\n\n";
         echo "sleep 10\n";
+        $this->makeResourceTest();
+        echo "\n\n#========[END]===========\n\n";
+        echo "echo -n .\n";
+        echo "done\n";
+        file_put_contents($this->getCrontabDir().'/entrypoint.sh', ob_get_clean());
+        $this->test();
+    }
+
+    public function test()
+    {
+        ob_start();
+        echo "#!/usr/bin/env bash\n";
+        echo "cd `dirname $0`\n";
+        echo "echo \$HOST_TYPE\n";
+        echo "echo \$HOSTNAME\n";
+        $this->makeResourceTest();
+        file_put_contents($this->getCrontabDir().'/entrypointtest.sh', ob_get_clean());
+    }
+
+    protected function makeResourceTest()
+    {
         if ($this->getConfigDir()) {
-            $RecursiveDirectoryIterator = new \RecursiveIteratorIterator((new \RecursiveDirectoryIterator($this->getConfigDir())));
+            $RecursiveDirectoryIterator = (new \DirectoryIterator($this->getConfigDir()));
             foreach ($RecursiveDirectoryIterator as $item) {
                 $classNameFromFile = (new ClassNameFromFile())
                     ->setFilePath($item->getPathname());
@@ -197,30 +218,6 @@ final class CrontabMaker
                 }
             }
         }
-
-        echo "\n\n#========[END]===========\n\n";
-        echo "echo -n .\n";
-        echo "done\n";
-        file_put_contents($this->getCrontabDir().'/entrypoint.sh', ob_get_clean());
     }
 
-    public function test()
-    {
-        ob_start();
-        echo "#!/usr/bin/env bash\n";
-        echo "cd `dirname $0`\n";
-        echo "echo \$HOST_TYPE\n";
-        echo "echo \$HOSTNAME\n";
-        /** @var \ReflectionClass $item */
-        foreach ($this->getConfigClass() as $item) {
-            $item = new \ReflectionClass($item);
-            $implementsInterface = $item
-                ->implementsInterface(TestConfig::class);
-            if ($implementsInterface) {
-                $ShortName = $item->getShortName();
-                echo "php -r 'ini_set(\"display_errors\", \"on\");include \"/var/www/html/vendor/autoload.php\";(new ".$item->getName().")->test(); echo \"+OK $ShortName\\n\";'  \n";
-            }
-        }
-        file_put_contents($this->getCrontabDir().'/entrypointtest.sh', ob_get_clean());
-    }
 }

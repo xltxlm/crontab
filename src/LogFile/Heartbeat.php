@@ -67,7 +67,7 @@ final class Heartbeat
         $shell = shell_exec('ps aux | grep php | grep -v grep | grep -v php-fpm');
         (new MailSmtp())
             ->setMailConfig($this->getMailConfig())
-            ->setTitle($_SERVER['HOSTNAME'].'-服务器心跳')
+            ->setTitle($_SERVER['HOSTNAME'].'-服务器心跳:'.$_SERVER['HOST_IP'])
             ->setBody(date('Y-m-d H:i:s').$shell)
             ->setTo($this->getMailUserInfo())
             ->__invoke();
