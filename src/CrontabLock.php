@@ -44,15 +44,20 @@ trait CrontabLock
      */
     public function __invoke()
     {
-        $this->log('子进程:开始运行,进程id:'.(int)posix_getpid());
+        $this->log('父级进程:开始运行,进程id:'.(int)posix_getpid());
         //子进程得到的$pid为0, 所以这里是子进程执行的逻辑。
         while (true) {
-            $this->log('子进程:真实代码开始运行');
-            $this->whileRun();
+            $pid = pcntl_fork(); //创建子进程
+            if ($pid == 0) {
+                $this->log('子进程:真实代码开始运行.id:'.(int)posix_getpid());
+                $this->whileRun();
+                $this->log('子进程:真实代码运行完毕');
+                exit;
+            }
+            pcntl_wait($status);
             sleep($this->getSleepSecond());
-            $this->log('子进程:真实代码运行完毕');
         }
-        $this->log('子进程:结束');
+        $this->log('父级进程:结束');
         exit;
     }
 
