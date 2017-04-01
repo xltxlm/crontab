@@ -55,6 +55,10 @@ trait CrontabLock
                 exit;
             }
             pcntl_wait($status);
+            if (pcntl_wexitstatus($status)) {
+                //子进程不正常退出,父进程也跟随退出
+                exit;
+            }
             sleep($this->getSleepSecond());
         }
         $this->log('父级进程:结束');
