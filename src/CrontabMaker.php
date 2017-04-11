@@ -137,12 +137,17 @@ final class CrontabMaker
         ob_start();
         echo "#!/usr/bin/env bash\n";
         echo "cd `dirname $0`\n";
-        echo "while test \"1\" = \"1\"\ndo\n";
         echo "\n\n#========1:定时任务类===========\n\n";
         $RecursiveDirectoryIterator = new \RecursiveIteratorIterator((new \RecursiveDirectoryIterator($this->getCrontabDir())));
         /** @var \SplFileInfo $item */
         foreach ($RecursiveDirectoryIterator as $item) {
+            //必须是php后缀的
             if (strpos($item, '.php') === false) {
+                continue;
+            }
+            //单元测试的文件不要
+            if(strpos(file_get_contents($item->getRealPath()),'PHPUnit\\Framework\\TestCase')!==false)
+            {
                 continue;
             }
             $classNameFromFile = (new ClassNameFromFile())
@@ -180,7 +185,6 @@ final class CrontabMaker
         $this->makeResourceTest();
         echo "\n\n#========[END]===========\n\n";
         echo "echo -n .\n";
-        echo "done\n";
         file_put_contents($this->getCrontabDir().'/entrypoint.sh', ob_get_clean());
         $this->test();
     }
@@ -201,6 +205,16 @@ final class CrontabMaker
         if ($this->getConfigDir()) {
             $RecursiveDirectoryIterator = (new \DirectoryIterator($this->getConfigDir()));
             foreach ($RecursiveDirectoryIterator as $item) {
+
+                //必须是php后缀的
+                if (strpos($item, '.php') === false) {
+                    continue;
+                }
+                //单元测试的文件不要
+                if(strpos(file_get_contents($item->getRealPath()),'PHPUnit\\Framework\\TestCase')!==false)
+                {
+                    continue;
+                }
                 $classNameFromFile = (new ClassNameFromFile())
                     ->setFilePath($item->getPathname());
                 if (!$classNameFromFile->getClassName() || in_array(CrontabLock::class, $classNameFromFile->getTraits())) {

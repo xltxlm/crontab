@@ -8,6 +8,8 @@
 
 namespace xltxlm\crontab;
 
+use xltxlm\helper\Ctroller\SetExceptionHandler;
+
 /**
  * 借助文件锁,独占进程,必须在上级文件第一行php代码写上 declare(ticks = 1);
  * 采用父进程监听,子进程运行的策略
@@ -49,6 +51,7 @@ trait CrontabLock
         while (true) {
             $pid = pcntl_fork(); //创建子进程
             if ($pid == 0) {
+                SetExceptionHandler::instance();
                 $this->log('子进程:真实代码开始运行.id:'.(int)posix_getpid());
                 $this->whileRun();
                 $this->log('子进程:真实代码运行完毕');
@@ -56,7 +59,7 @@ trait CrontabLock
             }
             pcntl_wait($status);
             if (pcntl_wexitstatus($status)) {
-                //子进程不正常退出,父进程也跟随退出
+                $this->log('子进程不正常退出,父进程也跟随退出');
                 exit;
             }
             sleep($this->getSleepSecond());
