@@ -146,8 +146,7 @@ final class CrontabMaker
                 continue;
             }
             //单元测试的文件不要
-            if(strpos(file_get_contents($item->getRealPath()),'PHPUnit\\Framework\\TestCase')!==false)
-            {
+            if (strpos(file_get_contents($item->getRealPath()), 'PHPUnit\\Framework\\TestCase') !== false) {
                 continue;
             }
             $classNameFromFile = (new ClassNameFromFile())
@@ -160,6 +159,12 @@ final class CrontabMaker
             }
             $path = strtr($item->getPathname(), [$this->getCrontabDir() => '', '\\' => '/']);
             echo 'flock -xn '.md5($path).".flock -c \" php .$path\" & \n";
+
+            //杀死任务进程
+            ob_start();
+            echo "#!/usr/bin/env bash\n";
+            echo "ps aux | grep -v grep | grep '.$path' | awk '{print \$2}' | xargs kill ";
+            $this->file_put_contents($this->getCrontabDir().'/kill/'.basename($item->getPathname(), '.php').'.run', ob_get_clean());
         }
         echo "\n\n#========2:项目文件变化监控===========\n\n";
         $inotifywaitSHPath = strtr(realpath($this->getInotifywaitSHPath()), [$this->getCrontabDir() => '', '\\' => '/']);
@@ -185,7 +190,7 @@ final class CrontabMaker
         $this->makeResourceTest();
         echo "\n\n#========[END]===========\n\n";
         echo "echo -n .\n";
-        file_put_contents($this->getCrontabDir().'/entrypoint.sh', ob_get_clean());
+        $this->file_put_contents($this->getCrontabDir().'/entrypoint.sh', ob_get_clean());
         $this->test();
     }
 
@@ -197,7 +202,7 @@ final class CrontabMaker
         echo "echo \$HOST_TYPE\n";
         echo "echo \$HOSTNAME\n";
         $this->makeResourceTest();
-        file_put_contents($this->getCrontabDir().'/entrypointtest.sh', ob_get_clean());
+        $this->file_put_contents($this->getCrontabDir().'/entrypointtest.sh', ob_get_clean());
     }
 
     protected function makeResourceTest()
@@ -211,8 +216,7 @@ final class CrontabMaker
                     continue;
                 }
                 //单元测试的文件不要
-                if(strpos(file_get_contents($item->getRealPath()),'PHPUnit\\Framework\\TestCase')!==false)
-                {
+                if (strpos(file_get_contents($item->getRealPath()), 'PHPUnit\\Framework\\TestCase') !== false) {
                     continue;
                 }
                 $classNameFromFile = (new ClassNameFromFile())
@@ -234,4 +238,15 @@ final class CrontabMaker
         }
     }
 
+    /**
+     * 写入文件
+     * @param $classRealFile
+     */
+    protected function file_put_contents($classRealFile, $ob_get_clean)
+    {
+        //确保文件的内容不一致才写入
+        if (file_get_contents($classRealFile) !== $ob_get_clean) {
+            file_put_contents($classRealFile, $ob_get_clean);
+        }
+    }
 }
