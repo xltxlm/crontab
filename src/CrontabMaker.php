@@ -11,6 +11,7 @@ namespace xltxlm\crontab;
 use xltxlm\config\TestConfig;
 use xltxlm\crontab\Unit\Tail;
 use xltxlm\helper\Hclass\ClassNameFromFile;
+use xltxlm\helper\Hdir\file_write_contents;
 
 /**
  * 把集成 CrontabLock 的类集合在一起生成运行脚本
@@ -18,6 +19,7 @@ use xltxlm\helper\Hclass\ClassNameFromFile;
  */
 final class CrontabMaker
 {
+    use file_write_contents;
     /** @var string 定时任务类集合所在的目录 */
     protected $crontabDir = '';
     /** @var string 配置文件夹 */
@@ -164,7 +166,7 @@ final class CrontabMaker
             ob_start();
             echo "#!/usr/bin/env bash\n";
             echo "ps aux | grep -v grep | grep '.$path' | awk '{print \$2}' | xargs kill ";
-            $this->file_put_contents($this->getCrontabDir().'/kill/'.basename($item->getPathname(), '.php').'.run', ob_get_clean());
+            $this->file_write_contents($this->getCrontabDir().'/kill/'.basename($item->getPathname(), '.php').'.run', ob_get_clean());
         }
         echo "\n\n#========2:项目文件变化监控===========\n\n";
         $inotifywaitSHPath = strtr(realpath($this->getInotifywaitSHPath()), [$this->getCrontabDir() => '', '\\' => '/']);
@@ -190,7 +192,7 @@ final class CrontabMaker
         $this->makeResourceTest();
         echo "\n\n#========[END]===========\n\n";
         echo "echo -n .\n";
-        $this->file_put_contents($this->getCrontabDir().'/entrypoint.sh', ob_get_clean());
+        $this->file_write_contents($this->getCrontabDir().'/entrypoint.sh', ob_get_clean());
         $this->test();
     }
 
@@ -202,7 +204,7 @@ final class CrontabMaker
         echo "echo \$HOST_TYPE\n";
         echo "echo \$HOSTNAME\n";
         $this->makeResourceTest();
-        $this->file_put_contents($this->getCrontabDir().'/entrypointtest.sh', ob_get_clean());
+        $this->file_write_contents($this->getCrontabDir().'/entrypointtest.sh', ob_get_clean());
     }
 
     protected function makeResourceTest()
@@ -238,15 +240,4 @@ final class CrontabMaker
         }
     }
 
-    /**
-     * 写入文件
-     * @param $classRealFile
-     */
-    protected function file_put_contents($classRealFile, $ob_get_clean)
-    {
-        //确保文件的内容不一致才写入
-        if (file_get_contents($classRealFile) !== $ob_get_clean) {
-            file_put_contents($classRealFile, $ob_get_clean);
-        }
-    }
 }
