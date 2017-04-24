@@ -32,18 +32,19 @@ if ($fp) {
             $body = $line;
         }
         //保存最后一次运行的时间
-        $time = file_get_contents(__DIR__.'/tmp');
+        $tmptime = __DIR__.'/tmptime';
+        $time = file_get_contents($tmptime);
         if (time() - $time < 10) {
             log("距离上一次时间间隔太小,跳过");
             continue;
         }
-        file_put_contents(__DIR__.'/tmp', time());
+        file_put_contents($tmptime, time());
         log("正常发送:".$body);
         (new MailSmtp())
-            ->setMailConfig($ErrorLog->getMailConfig())
+            ->setMailConfig(new MailAlert())
             ->setTitle($_SERVER['HOSTNAME'].':'.basename($ErrorLog->getFilepath()).$_SERVER['HOST_IP'])
             ->setBody($body)
-            ->setTo($ErrorLog->getMailUserInfo())
+            ->setTo(new MailUserInfoAlertConfig())
             ->__invoke();
     }
 }

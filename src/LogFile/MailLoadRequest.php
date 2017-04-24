@@ -42,10 +42,6 @@ if (php_sapi_name() == 'cli') {
 final class MailLoadRequest
 {
     use Request;
-    /** @var string MailConfig */
-    protected $mailConfig;
-    /** @var MailUserInfo 账户信息 */
-    protected $MailUserInfo;
     /** @var string 只查找特定的关键词 */
     protected $errorstr = '';
     /** @var string 监控的文件路径 */
@@ -91,43 +87,4 @@ final class MailLoadRequest
         return $this;
     }
 
-    /**
-     * @return MailUserInfo
-     */
-    public function getMailUserInfo(): MailUserInfo
-    {
-        return new $this->MailUserInfo();
-    }
-
-    /**
-     * @param MailUserInfo $MailUserInfo
-     *
-     * @return MailLoadRequest
-     */
-    public function setMailUserInfo($MailUserInfo)
-    {
-        $this->MailUserInfo = $MailUserInfo;
-
-        return $this;
-    }
-
-    /**
-     * @return MailConfig
-     */
-    public function getMailConfig()
-    {
-        return new $this->mailConfig();
-    }
-
-    /**
-     * @param string $mailConfig
-     *
-     * @return MailLoadRequest
-     */
-    public function setMailConfig($mailConfig)
-    {
-        $this->mailConfig = $mailConfig;
-
-        return $this;
-    }
 }
