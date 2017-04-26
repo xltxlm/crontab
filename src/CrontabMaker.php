@@ -184,7 +184,6 @@ final class CrontabMaker
         foreach ($this->getTails() as $tail) {
             $relatePath = md5($tail->getFile());
             echo "flock -xn $relatePath.flock -c \"".'tail -f  '.$tail->getFile().' | php '.$tail->getClassFilePath().
-                ' mailConfig='.$tail->getMailClass().' mailUserInfo='.$tail->getMailUserInfo().
                 " errorstr='".$tail->getErrorstr()."' filepath=".array_shift(explode(' ', $tail->getFile()))."\" &\n";
         }
         echo "\n\n#========4:资源链接测试===========\n\n";

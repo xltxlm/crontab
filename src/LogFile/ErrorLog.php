@@ -32,7 +32,7 @@ if ($fp) {
             $body = $line;
         }
         //保存最后一次运行的时间
-        $tmptime = __DIR__.'/tmptime';
+        $tmptime = '/tmp/tmptime';
         $time = file_get_contents($tmptime);
         if (time() - $time < 10) {
             log("距离上一次时间间隔太小,跳过");
