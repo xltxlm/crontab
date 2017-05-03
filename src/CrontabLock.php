@@ -23,6 +23,27 @@ trait CrontabLock
     private $fp;
     /** @var string 锁文件的路径 */
     private $lockFile = '';
+    /** @var bool 是否开启redis并发锁 */
+    protected $rediLock = true;
+
+    /**
+     * @return bool
+     */
+    public function isRediLock(): bool
+    {
+        return $this->rediLock;
+    }
+
+    /**
+     * @param bool $rediLock
+     * @return $this
+     */
+    public function setRediLock(bool $rediLock)
+    {
+        $this->rediLock = $rediLock;
+        return $this;
+    }
+
 
     /**
      * 设置每个循环暂停的秒数.
@@ -54,16 +75,19 @@ trait CrontabLock
         while (true) {
             $pid = pcntl_fork(); //创建子进程
             if ($pid == 0) {
-                //如果存在多个实例服务,那么锁住,只能一个实例运行任务
-                $locked = (new LockKey())
-                    ->setKey('CrontabLock'.static::class)
-                    ->setValue(date('c'))
-                    ->setExpire($this->getSleepSecond())
-                    ->setRedisConfig(new RedisCacheConfig())
-                    ->__invoke();
-                if (!$locked) {
-                    $this->log('取不到锁,退出运行');
-                    exit;
+                if ($this->rediLock) {
+                    //如果存在多个实例服务,那么锁住,只能一个实例运行任务
+                    $locked = (new LockKey())
+                        ->setKey('CrontabLock'.static::class)
+                        ->setValue(date('c'))
+                        ->setExpire($this->getSleepSecond())
+                        ->setRedisConfig(new RedisCacheConfig())
+                        ->__invoke();
+                    if (!$locked) {
+                        $this->log('取不到锁,退出运行');
+                        exit;
+                    }
+                } else {
                 }
 
                 SetExceptionHandler::instance();
