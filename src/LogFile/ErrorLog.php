@@ -42,7 +42,7 @@ if ($fp) {
         log("正常发送:".$body);
         (new MailSmtp())
             ->setMailConfig(new MailAlert())
-            ->setTitle($_SERVER['HOSTNAME'].':'.basename($ErrorLog->getFilepath()).$_SERVER['HOST_IP'])
+            ->setTitle($_SERVER['HOSTNAME'].':'.basename($ErrorLog->getFilepath()).$_SERVER['HOST_IP']."({$_SERVER['HOST_TYPE']})")
             ->setBody($body)
             ->setTo(new MailUserInfoAlertConfig())
             ->__invoke();
