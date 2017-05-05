@@ -59,7 +59,7 @@ trait CrontabLock
      */
     abstract protected function whileRun();
 
-    protected function log($str)
+    public function log($str)
     {
         fwrite($this->fp, '['.date('Y-m-d H:i:s').']'.$str."\n");
     }
@@ -84,7 +84,7 @@ trait CrontabLock
                         ->setRedisConfig(new RedisCacheConfig())
                         ->__invoke();
                     if (!$locked) {
-                        $this->log('取不到锁,退出运行');
+                        $this->log('取不到锁,退出运行'.(int)posix_getpid());
                         exit;
                     }
                 } else {
