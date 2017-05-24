@@ -12,7 +12,7 @@
     "xltxlm/helper": "*",
     "xltxlm/mail": "*",
     "xltxlm/config": "*",
-    "xltxlm/redis": "*"
+    "xltxlm/ssoclient": "*"
   },
   "autoload": {
     "psr-4": {

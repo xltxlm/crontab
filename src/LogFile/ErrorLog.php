@@ -8,7 +8,8 @@
 
 namespace xltxlm\crontab\LogFile;
 
-use xltxlm\mail\MailSmtp;
+
+use xltxlm\helper\Util;
 
 eval("include_once '/var/www/html/vendor/autoload.php';");
 
@@ -18,39 +19,40 @@ if ($fp) {
     while ($line = fgets($fp, 4096 * 10)) {
         //在早上8点之前,不要发送任何错误信息,-没人处理
         if (date('H') < '08') {
-            log("早上8点前不要发送通知邮件");
+            Util::error_log("早上8点前不要发送通知邮件");
         }
         if ($ErrorLog->getErrorstr()) {
             if (strpos(strtolower($line), strtolower($ErrorLog->getErrorstr())) === false) {
-                log("没有包含关键词:".$ErrorLog->getErrorstr().":$line");
-                continue;
+                Util::error_log("没有包含关键词:".$ErrorLog->getErrorstr().":$line");
+                return;
             }
         }
         if ($line[0] == '{') {
+            Util::error_log("json格式");
             $body = var_export(json_decode($line, true), true);
         } else {
+            Util::error_log("普通字符串");
             $body = $line;
         }
-        //保存最后一次运行的时间
-        $tmptime = '/tmp/tmptime';
-        $time = file_get_contents($tmptime);
-        if (time() - $time < 20) {
-            log("距离上一次时间间隔太小,跳过");
-            continue;
-        }
-        file_put_contents($tmptime, time());
-        log("正常发送:".$body);
-        (new MailSmtp())
-            ->setMailConfig(new MailAlert())
-            ->setTitle($_SERVER['HOSTNAME'].':'.basename($ErrorLog->getFilepath()).$_SERVER['HOST_IP']."({$_SERVER['HOST_TYPE']})")
+        $MailModel = $ErrorLog->getNamespace().'Thrift\mail\mailModel';
+        $mailModelObject = (new $MailModel);
+        $mailModelObject
+            ->setTitle($ErrorLog->getFilepath())
             ->setBody($body)
-            ->setTo(new MailUserInfoAlertConfig())
+            ->setTo('me@xialintai.com')
+            ->setHosttype($_SERVER['HOST_TYPE'])
+            ->setProjectname($_SERVER['HOSTNAME'])
+            ->setFromUserName('错误提示');
+
+
+        $SsoThrift = $ErrorLog->getNamespace().'Config\\SsoThrift';
+        $mail = $ErrorLog->getNamespace().'Thrift\mail\Client\Mail';
+        $mailObject = (new $mail);
+        $mailObject
+            ->setThriftConfig(new $SsoThrift)
+            ->setmailModel($mailModelObject)
             ->__invoke();
     }
 }
 fclose($fp);
 
-function log($str)
-{
-    file_put_contents(getcwd().'/'.basename(__FILE__).'.lock', '['.date('Y-m-d H:i:s').']'.$str."\n", FILE_APPEND);
-}

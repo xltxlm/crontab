@@ -46,6 +46,27 @@ final class MailLoadRequest
     protected $errorstr = '';
     /** @var string 监控的文件路径 */
     protected $filepath = '';
+    /** @var string 当前项目的命名空间 */
+    protected $namespace = "";
+
+    /**
+     * @return string
+     */
+    public function getNamespace(): string
+    {
+        return $this->namespace;
+    }
+
+    /**
+     * @param string $namespace
+     * @return MailLoadRequest
+     */
+    public function setNamespace(string $namespace): MailLoadRequest
+    {
+        $this->namespace = $namespace;
+        return $this;
+    }
+
 
     /**
      * @return string
