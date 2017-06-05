@@ -77,14 +77,15 @@ trait CrontabLock
             if ($pid == 0) {
                 if ($this->rediLock) {
                     //如果存在多个实例服务,那么锁住,只能一个实例运行任务
+                    $key = "{$_SERVER['HOSTNAME']}CrontabLock" . static::class;
                     $locked = (new LockKey())
-                        ->setKey('CrontabLock'.static::class)
+                        ->setKey($key)
                         ->setValue(date('c'))
                         ->setExpire($this->getSleepSecond())
                         ->setRedisConfig(new RedisCacheConfig())
                         ->__invoke();
                     if (!$locked) {
-                        $this->log('取不到锁,退出运行'.(int)posix_getpid());
+                        $this->log("取不到锁:{$key},退出运行".(int)posix_getpid());
                         exit;
                     }
                 } else {
