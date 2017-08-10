@@ -2,3 +2,4 @@
 .idea
 /src/LogFile/MailAlert.php
 /src/LogFile/MailUserInfoAlertConfig.php
+.php_cs.cache
