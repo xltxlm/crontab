@@ -102,7 +102,7 @@ trait CrontabLock
                 $this->log('子进程不正常退出,父进程也跟随退出');
                 exit;
             }
-
+            $this->log("父进程休眠：{$this->getSleepSecond()}秒");
             sleep($this->getSleepSecond());
         }
         $this->log('父级进程:结束');

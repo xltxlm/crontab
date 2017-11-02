@@ -1,5 +1,6 @@
 /vendor/
 .idea
+/src/Config/RedisCacheConfig.php
 /src/LogFile/MailAlert.php
 /src/LogFile/MailUserInfoAlertConfig.php
 .php_cs.cache
