@@ -20,12 +20,5 @@
         "src/"
       ]
     }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "xltxlm\\crontab\\": [
-        "./"
-      ]
-    }
   }
 }
