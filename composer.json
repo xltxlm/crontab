@@ -1,18 +1,18 @@
 {
   "name": "xltxlm/crontab",
   "description": "死循环任务调度编排，保证任务不死机",
+  "license": "MIT",
   "authors": [
     {
       "name": "xltxlm",
       "email": "xltxlm@qq.com"
     }
   ],
+
   "require": {
     "php": ">=7.0",
     "xltxlm/helper": "*",
-    "xltxlm/mail": "*",
-    "xltxlm/config": "*",
-    "xltxlm/ssoclient": "*"
+    "xltxlm/redis":"*"
   },
   "autoload": {
     "psr-4": {
