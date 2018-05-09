@@ -191,16 +191,6 @@ trait CrontabLock
         $lockKeyObject = (new RedisCacheConfig())->__invoke();
         //遍历现在的集合，找出空的位置 ，
 
-        //防止主进程异常退出，先清理掉已经不在的进程
-        $harrays = $lockKeyObject->hGetAll($this->getHKey() . 'list');
-        foreach ($harrays as $opid => $num) {
-            $index = array_search($opid, $this->childlist);
-            if ($index === false) {
-                $lockKeyObject->hDel($this->getHKey() . 'list', $opid);
-                $this->log("进程id:[$pid]被注销序号:[$num]");
-            }
-        }
-
         $harrays = $lockKeyObject->hGetAll($this->getHKey() . 'list');
         $num = -1;
         for ($i = 0; $i < $this->getNum(); $i++) {
@@ -213,18 +203,23 @@ trait CrontabLock
             }
         }
         if ($num != -1) {
-            $lockKeyObject->hSetNx($this->getHKey() . 'list', $pid, $num);
-            $this->log("给进程id:[$pid]分发序号:[$num]");
-            return true;
+            if ($lockKeyObject->hSetNx($this->getHKey() . 'list', $pid, $num)) {
+                $this->log("给进程id:[$pid]分发序号:[$num]");
+                return true;
+            }
         }
-        throw new \Exception(date('Y-m-d H:i:s') . "序号已经分发完了，为什么还有申请的？" . json_encode($harrays, JSON_UNESCAPED_UNICODE));
+        throw new \Exception(date('Y-m-d H:i:s') . "【{$pid}】序号已经分发完了，为什么还有申请的？" . json_encode($harrays, JSON_UNESCAPED_UNICODE));
     }
 
+    /**
+     * 确认当前进程排序的序号，用来做求摸多进程并发
+     * @return array
+     * @throws \Exception
+     */
     protected function 确认序号()
     {
         $pid = (int)posix_getpid();
-        //需求等上级把序号写进去了，再查。否则如果子进程运行比父进程快，那么就查询不到内容了
-        usleep(1000 * 100);
+        //需要等上级把序号写进去了，再查。否则如果子进程运行比父进程快，那么就查询不到内容了
         $lockKeyObject = (new RedisCacheConfig())->__invoke();
         //遍历现在的集合，找出空的位置 ，
         $harrays = $lockKeyObject->hGetAll($this->getHKey() . 'list');
@@ -246,6 +241,8 @@ trait CrontabLock
         echo $message . "\n";
         //子进程得到的$pid为0, 所以这里是子进程执行的逻辑。
 
+        //启动总任务的时候，清空掉redis队列
+        (new RedisCacheConfig())->__invoke()->del($this->getHKey() . 'list');
         $Runtimes = 0;
         while (true) {
             $Runtimes++;
@@ -284,21 +281,28 @@ trait CrontabLock
                 continue;
             }
 
+            $子进程全部退出 = count($this->childlist) == 0;
+            if ($子进程全部退出) {
+                (new RedisCacheConfig())->__invoke()->del($this->getHKey() . 'list');
+            }
+
+
             $this->log("当前进程数目:" . count($this->childlist) . "，要求进程数：{$this->getNum()}，还需要生成" . ($this->getNum() - count($this->childlist)) . "个");
             //生成指定数量的进程数目
             for ($i = count($this->childlist); $i < $this->getNum(); $i++) {
-                $this->log("生成进程： $i");
                 $pid = pcntl_fork(); //创建子进程
                 if ($pid == 0) {
                     $pid = (int)posix_getpid();
+                    $this->序号分发器($pid);
+                    $this->log("生成进程【{$pid}】： $i");
                     SetExceptionHandler::instance();
                     $this->log("子进程:真实代码开始运行.id:$pid");
                     $this->whileRun();
                     $this->log("子进程:真实代码运行完毕:$pid");
                     exit;
                 } else {
+                    $this->log("追加子进程:$pid");
                     $this->childlist[] = $pid;
-                    $this->序号分发器($pid);
                 }
             }
 
@@ -349,7 +353,9 @@ trait CrontabLock
      */
     public function __destruct()
     {
-        $this->log('析构函数被调用:进程id:' . (int)posix_getpid());
+        $pid = (int)posix_getpid();
+        $this->序号注销器($pid);
+        $this->log('析构函数被调用:进程id:' . $pid);
         flock($this->fp, LOCK_UN);
         fclose($this->fp);
     }
