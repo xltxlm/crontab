@@ -132,33 +132,6 @@ trait CrontabLock
         return $this;
     }
 
-
-    /**
-     * @return bool
-     */
-    public function isRediLock(): bool
-    {
-        return $this->rediLock;
-    }
-
-    /**
-     * @param bool $rediLock
-     * @return $this
-     */
-    public function setRediLock(bool $rediLock)
-    {
-        $this->rediLock = $rediLock;
-        return $this;
-    }
-
-    /**
-     * @return array
-     */
-    public function getChildlist(): array
-    {
-        return $this->childlist;
-    }
-
     /**
      * @param array $childlist
      * @return CrontabLock
@@ -240,7 +213,8 @@ trait CrontabLock
                 continue;
             }
         }
-        if ($num != -1) {
+        $还有坑 = $num != -1;
+        if ($还有坑) {
             if ($lockKeyObject->hSetNx($this->getHKey() . 'list', $pid, $num)) {
                 //搞定之后,释放掉锁
                 $lockKey->free();
@@ -249,7 +223,7 @@ trait CrontabLock
             }
         }
         $lockKey->free();
-        throw new \Exception(date('Y-m-d H:i:s') . "【{$pid}】序号已经分发完了，为什么还有申请的？" . json_encode($harrays, JSON_UNESCAPED_UNICODE));
+        die;
     }
 
     /**
@@ -287,21 +261,6 @@ trait CrontabLock
         $Runtimes = 0;
         while (true) {
             $Runtimes++;
-            if ($this->rediLock) {
-                //如果存在多个实例服务,那么锁住,只能一个实例运行任务
-                $lockKeyObject = (new LockKey())->setRedisConfig($this->getRedisCacheConfigObject());
-                $没有获取到锁 = !$lockKeyObject
-                    ->setKey($this->getHKey() . 'lock')
-                    ->setValue(date('c'))
-                    //提前一秒解锁。防止下一次循环刚好就差一点
-                    ->setExpire(max(1, $this->getSleepSecond() - 1))
-                    ->__invoke();
-                if ($没有获取到锁) {
-                    $this->log("父进程[$mypid]取不到锁:[" . $lockKeyObject->getClient()->get($this->getHKey() . 'lock') . " vs " . date('c') . "]");
-                    sleep($this->getSleepSecond());
-                }
-            }
-
             //取消掉已经不存在的进程
             foreach ($this->childlist as $key => $pid) {
                 //$this->log("监听pid：{$pid}");
@@ -368,12 +327,12 @@ trait CrontabLock
         $mypid = (int)posix_getpid();
         //单机启动的时候，文件锁没法卡住。改用redis锁
         $lockKeyObject = (new LockKey())
-            ->setRedisConfig($this->getRedisCacheConfigObject());
-
-        $没有锁住 = !$lockKeyObject
+            ->setRedisConfig($this->getRedisCacheConfigObject())
             ->setKey($this->getHKey() . 'main')
             ->setValue($mypid)
-            ->setExpire($this->getSleepSecond())
+            ->setExpire($this->getSleepSecond());
+
+        $没有锁住 = !$lockKeyObject
             ->__invoke();
         if ($没有锁住) {
             throw new \Exception("无法启动，还有另外一个进程没有释放锁" . $this->getHKey() . "main 锁进程id:" . $lockKeyObject->getClient()->get($this->getHKey() . 'main') . " vs 当前进程id:$mypid");
@@ -387,7 +346,7 @@ trait CrontabLock
         }
         register_tick_function([$this, 'tick']);
         sleep(1);
-        $lockKeyObject->getClient()->del($this->getHKey() . 'main');
+        $lockKeyObject->free();
     }
 
     /**
