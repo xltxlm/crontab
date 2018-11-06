@@ -8,15 +8,17 @@
       "email": "xltxlm@qq.com"
     }
   ],
-
+  "minimum-stability": "dev",
   "require": {
-    "php": ">=7.0",
+    "php": ">=7.1",
+    "ext-pcntl": "*",
     "xltxlm/helper": "*",
-    "xltxlm/redis":"*"
+    "xltxlm/redis": "@dev"
   },
   "autoload": {
     "psr-4": {
       "xltxlm\\crontab\\": [
+        "./",
         "src/"
       ]
     }

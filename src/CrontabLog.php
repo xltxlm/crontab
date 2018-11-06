@@ -19,6 +19,6 @@ trait CrontabLog
     {
         $filepath = (new \ReflectionClass(static::class))
             ->getFileName();
-        file_put_contents($filepath . ".lock", '[' . date('Y-m-d H:i:s') . ']' . json_encode($message, JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND);
+        error_log(date('c') . json_encode($message, JSON_UNESCAPED_UNICODE) . "\n", 3, $filepath . '.lock');
     }
 }
