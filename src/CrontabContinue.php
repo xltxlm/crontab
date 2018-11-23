@@ -9,7 +9,9 @@
 namespace xltxlm\crontab;
 
 
-class CrontabContinue extends \Exception
-{
+use xltxlm\exception\Exception;
 
+class CrontabContinue extends Exception
+{
+    use CrontabContinue\CrontabContinue_implements;
 }

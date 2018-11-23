@@ -270,6 +270,9 @@ trait CrontabLock
         $this->log('父进程:开始运行,进程id:' . $mypid);
         //子进程得到的$pid为0, 所以这里是子进程执行的逻辑。
 
+        $crontabclassname = (new \ReflectionClass(static::class))->getFileName();
+        cli_set_process_title(basename($crontabclassname) . ".php@Totalx{$this->getNum()}");
+
         //启动总任务的时候，清空掉redis队列
         $this->getRedisCacheConfigObject()->__invoke()->del($this->getHKey() . 'list');
         $Runtimes = 0;
@@ -308,10 +311,9 @@ trait CrontabLock
                     //获取进程的序号
                     $num = $this->序号分发器($pid);
                     SetExceptionHandler::instance();
-                    $this->log("生成进程【{$pid}】： $num");
+                    cli_set_process_title(basename($crontabclassname) . ".php@{$num}x{$this->getNum()}");
                     //运行真实的代码
                     $this->whileRun($num);
-                    $this->log("结束进程【{$pid}】： $num");
                     exit;
                 } else {
                     $this->childlist[] = $pid;

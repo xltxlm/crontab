@@ -1,25 +1,25 @@
 {
   "name": "xltxlm/crontab",
-  "description": "死循环任务调度编排，保证任务不死机",
-  "license": "MIT",
   "authors": [
     {
-      "name": "xltxlm",
+      "name": "copygithub",
       "email": "xltxlm@qq.com"
     }
   ],
   "minimum-stability": "dev",
+  "description":"",
   "require": {
-    "php": ">=7.1",
+    "php": "~7.0",
     "ext-pcntl": "*",
-    "xltxlm/helper": "*",
+    "xltxlm/helper": "@dev",
+    "xltxlm/Exception": "@dev",
     "xltxlm/redis": "@dev"
   },
   "autoload": {
     "psr-4": {
       "xltxlm\\crontab\\": [
-        "./",
-        "src/"
+        "src/",
+        "./"
       ]
     }
   }
