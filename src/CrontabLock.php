@@ -213,7 +213,7 @@ trait CrontabLock
         $获取不到锁 = $lockKey->__invoke() == false;
 
         if ($获取不到锁) {
-            $this->log("$inum 排队过于频繁:");
+            $this->log("$inum 排队过于频繁");
             die;
         }
 
@@ -231,7 +231,6 @@ trait CrontabLock
             $this->log("$inum 排队失败,前面是:" . $redisclient->get($this->getHKey() . 'Lockwait'));
             die;
         }
-        $this->log("$inum 可以计算分配");
 
         $lockKeyObject = $this->getRedisCacheConfigObject()->__invoke();
         $alllistkey = $this->getHKey() . 'list';
@@ -285,7 +284,6 @@ trait CrontabLock
             $Runtimes++;
             //取消掉已经不存在的进程
             foreach ($this->childlist as $key => $pid) {
-                //$this->log("监听pid：{$pid}");
                 $res = pcntl_waitpid($pid, $status, WNOHANG);
 
                 // If the process has already exited
