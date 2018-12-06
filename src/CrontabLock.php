@@ -203,45 +203,13 @@ trait CrontabLock
      */
     protected function 序号分发器(int $pid, int $inum)
     {
-        //每一个序号必须等5秒再取,防止前面几个空跑的进程占据Lockwait锁
-        $writevalue = "$pid-$inum";
-        $lockKey = (new Redis_LockKey())
-            ->setRedisConfig($this->getRedisCacheConfigObject())
-            ->setExpire(5)
-            ->setKey($this->getHKey() . "Lockwait@$inum")
-            ->setValue($writevalue);
-        $获取不到锁 = $lockKey->__invoke() == false;
-
-        if ($获取不到锁) {
-            $this->log("$inum 排队过于频繁:");
-            die;
-        }
-
-        //等到本进程可以排他设置锁
-        $lockKey = (new Redis_LockKey())
-            ->setRedisConfig($this->getRedisCacheConfigObject())
-            ->setExpire(1)
-            ->setKey($this->getHKey() . 'Lockwait')
-            ->setValue($writevalue);
-        $获取不到锁 = $lockKey->__invoke() == false;
-
-        if ($获取不到锁) {
-            /** @var \Redis $redisclient */
-            $redisclient = $this->getRedisCacheConfigObject()->__invoke();
-            $this->log("$inum 排队失败,前面是:" . $redisclient->get($this->getHKey() . 'Lockwait'));
-            die;
-        }
-
         $lockKeyObject = $this->getRedisCacheConfigObject()->__invoke();
         $alllistkey = $this->getHKey() . 'list';
         $harrays = $lockKeyObject->hGetAll($alllistkey);
         if ($lockKeyObject->hSetNx($alllistkey, $inum, $pid)) {
-            //搞定之后,释放掉锁
-            $lockKey->free();
             return $inum;
         }
         $this->log("$inum 无法排上号.全部数据:" . json_encode($harrays, true));
-        $lockKey->free();
         die;
     }
 
@@ -311,6 +279,25 @@ trait CrontabLock
                 if ($this->childlist[$i]) {
                     continue;
                 }
+
+                //等到本进程可以排他设置锁
+                $lockKey = (new Redis_LockKey())
+                    ->setRedisConfig($this->getRedisCacheConfigObject())
+                    ->setExpire(1)
+                    ->setKey($this->getHKey() . 'Lockwait')
+                    ->setValue($i);
+                $获取不到锁 = $lockKey->__invoke() == false;
+
+                if ($获取不到锁) {
+                    /** @var \Redis $redisclient */
+                    $redisclient = $this->getRedisCacheConfigObject()->__invoke();
+                    $this->log("$i 排队失败,前面是:" . $redisclient->get($this->getHKey() . 'Lockwait'));
+                    $i--;
+                    sleep(1);
+                    continue;
+                }
+                $lockKey->free();
+
                 //创建子进程
                 $pid = pcntl_fork();
                 if ($pid == 0) {
@@ -318,7 +305,7 @@ trait CrontabLock
                     //获取进程的序号
                     $this->序号分发器($pid, $i);
                     SetExceptionHandler::instance();
-                    cli_set_process_title(basename($crontabclassname)."@{$i}x{$this->getNum()}");
+                    cli_set_process_title(basename($crontabclassname) . ".php@{$i}x{$this->getNum()}");
                     $this->setCurrentMod($i);
                     //运行真实的代码
                     $this->whileRun($i);
