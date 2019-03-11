@@ -296,6 +296,8 @@ trait CrontabLock
                 //创建子进程
                 $pid = pcntl_fork();
                 if ($pid == 0) {
+                    //切割php调试日志,按照小时进行分组
+                    ini_set('error_log', "/opt/logs/php_errors_" . date('Ymd') . ".log");
                     $basename = basename($crontabclassname, '.php');
                     $_SERVER['logid'] = $basename . '_' . DefineLog::getUniqid_static();
                     $pid = (int)posix_getpid();
