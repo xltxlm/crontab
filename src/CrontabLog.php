@@ -15,14 +15,22 @@ namespace xltxlm\crontab;
  */
 trait CrontabLog
 {
-    final protected function log($message)
+    /**
+     * @param mixed $message
+     * @param int $mod 如果mod>0 那么会写入新的.lock$mod文件里面
+     * @throws \ReflectionException
+     */
+    protected function log($message, $mod = 0)
     {
         $filepath = (new \ReflectionClass(static::class))
-            ->getFileName();
-        if (is_string($message)) {
-            error_log(date('c|') . $message . "\n", 3, $filepath . '.lock');
+            ->getShortName();
+        $newfilepath = "/opt/logs/" . $filepath . date('Ymd') . '.lock' . ($mod ?: '');
+        if (is_object($message)) {
+            error_log(date('c|') . json_encode(get_object_vars($message), JSON_UNESCAPED_UNICODE) . "\n", 3, $newfilepath);
+        } elseif (is_string($message)) {
+            error_log(date('c|') . $message . "\n", 3, $newfilepath);
         } else {
-            error_log(date('c|') . json_encode($message, JSON_UNESCAPED_UNICODE) . "\n", 3, $filepath . '.lock');
+            error_log(date('c|') . json_encode($message, JSON_UNESCAPED_UNICODE) . "\n", 3, $newfilepath);
         }
     }
 }

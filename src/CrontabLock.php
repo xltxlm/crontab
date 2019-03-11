@@ -9,6 +9,7 @@
 namespace xltxlm\crontab;
 
 use xltxlm\helper\Ctroller\SetExceptionHandler;
+use xltxlm\logger\Log\DefineLog;
 use xltxlm\redis\Config\RedisConfig;
 use xltxlm\redis\Features\Redis_LockKey;
 
@@ -19,6 +20,9 @@ use xltxlm\redis\Features\Redis_LockKey;
  */
 trait CrontabLock
 {
+    use CrontabLog {
+        log as  logOrigin;
+    }
     /** @var int 保持活跃的进程数 - 个数 */
     protected $num = 1;
     protected $childlist = [];
@@ -175,17 +179,8 @@ trait CrontabLock
 
     public function log($str)
     {
-        $logfilename = (new \ReflectionClass(static::class))->getFileName() . ".lock";
-        $this->getCurrentMod() ? $logfilename = $logfilename . $this->getCurrentMod() : '';
-
         if ($this->is记录执行日志()) {
-            if (is_object($str)) {
-                error_log(date('c|') . json_encode(get_object_vars($str), JSON_UNESCAPED_UNICODE) . "\n", 3, $logfilename);
-            } elseif (is_array($str)) {
-                error_log(date('c|') . json_encode($str, JSON_UNESCAPED_UNICODE) . "\n", 3, $logfilename);
-            } else {
-                error_log(date('c|') . $str . "\n", 3, $logfilename);
-            }
+            $this->logOrigin($str, $this->getCurrentMod());
         }
     }
 
@@ -301,11 +296,13 @@ trait CrontabLock
                 //创建子进程
                 $pid = pcntl_fork();
                 if ($pid == 0) {
+                    $basename = basename($crontabclassname, '.php');
+                    $_SERVER['logid'] = $basename . '_' . DefineLog::getUniqid_static();
                     $pid = (int)posix_getpid();
                     //获取进程的序号
                     $this->序号分发器($pid, $i);
                     SetExceptionHandler::instance();
-                    cli_set_process_title(basename($crontabclassname) . ".php@{$i}x{$this->getNum()}");
+                    cli_set_process_title($basename . ".php@{$i}x{$this->getNum()}");
                     $this->setCurrentMod($i);
                     //运行真实的代码
                     $this->whileRun($i);
