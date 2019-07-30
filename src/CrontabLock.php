@@ -204,7 +204,7 @@ trait CrontabLock
         if ($lockKeyObject->hSetNx($alllistkey, $inum, $pid)) {
             return $inum;
         }
-        $this->log("$inum 无法排上号.全部数据:" . json_encode($harrays, true));
+        $this->log("$inum 无法排上号[$alllistkey, $inum, $pid].全部数据:" . json_encode($harrays, true));
         die;
     }
 
@@ -239,11 +239,21 @@ trait CrontabLock
 
         $crontabclassname = (new \ReflectionClass(static::class))->getFileName();
         cli_set_process_title(basename($crontabclassname) . ".php@Totalx{$this->getNum()}");
+        $filemd5 = md5_file($crontabclassname);
 
         //启动总任务的时候，清空掉redis队列
         $this->getRedisCacheConfigObject()->__invoke()->del($this->getHKey() . 'list');
         $Runtimes = 0;
         while (true) {
+            //每次进来之前先检测下文件的md5值在决定重启
+            $filemd5_new = md5_file($crontabclassname);
+            if ($filemd5_new != $filemd5) {
+                foreach ($this->childlist as $key => $pid) {
+                    posix_kill($pid,SIGKILL);
+                }
+                $this->log("文件的内容发生改变了,重启进程");
+                exit;
+            }
             $Runtimes++;
             //取消掉已经不存在的进程
             foreach ($this->childlist as $key => $pid) {

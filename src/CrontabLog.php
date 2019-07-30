@@ -23,7 +23,7 @@ trait CrontabLog
     protected function log($message, $mod = 0)
     {
         $filepath = (new \ReflectionClass(static::class))
-            ->getShortName();
+            ->getShortName().".php";
         $newfilepath = "/opt/logs/" . $filepath . date('Ymd') . '.lock' . ($mod ?: '');
         if (is_object($message)) {
             error_log(date('c|') . json_encode(get_object_vars($message), JSON_UNESCAPED_UNICODE) . "\n", 3, $newfilepath);
