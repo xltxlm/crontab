@@ -13,7 +13,9 @@
     "ext-pcntl": "*",
     "xltxlm/helper": "@dev",
     "xltxlm/exception": "@dev",
-    "xltxlm/redis": "@dev"
+    "xltxlm/redis": "@dev",
+    "ext-posix": "*",
+    "ext-json": "*"
   },
   "autoload": {
     "psr-4": {
@@ -21,6 +23,16 @@
         "src/",
         "./"
       ]
-    }
+    },
+    "files": [
+    ]
+  },
+  "require-dev": {
+    "phpunit/phpunit": "*"
+  },
+  "scripts": {
+    "test": [
+      "vendor/bin/phpunit ./test -v --colors=auto --enforce-time-limit"
+    ]
   }
 }
