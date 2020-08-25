@@ -110,36 +110,6 @@ Trait CrontabLock_implements
 
 
 
-/* @var \xltxlm\redis\Config\RedisConfig  redis配置，用来记录子进程的启停，同时还可以做到多机器只启动一份（虽然从来没实践过） */
-        protected $RedisCacheConfigObject;
-
-
-
-
-
-    /**
-    * redis配置，用来记录子进程的启停，同时还可以做到多机器只启动一份（虽然从来没实践过）;
-    * @return \xltxlm\redis\Config\RedisConfig;
-    */
-            abstract public function getRedisCacheConfigObject():\xltxlm\redis\Config\RedisConfig;
-    
-    
-
-
-
-
-/**
-* @param \xltxlm\redis\Config\RedisConfig $RedisCacheConfigObject;
-* @return $this
-*/
-    public function setRedisCacheConfigObject(\xltxlm\redis\Config\RedisConfig $RedisCacheConfigObject )
-    {
-    $this->RedisCacheConfigObject = $RedisCacheConfigObject;
-    return $this;
-    }
-
-
-
 /* @var int  有的时候，进程吃太多内存，又泄露了，这个时候需要释放主进程，这个最大限制循环启动次数排上用场。比如在pack项目中 */
     protected $MaxRuntimes = 0;
     
@@ -174,8 +144,9 @@ Trait CrontabLock_implements
 
 
 /**
+* @var int $mod  标识是第几个子进程，0开始数起
 *  每个子进程执行部分的代码;
 *  @return ;
 */
-abstract protected function whileRun();
+abstract protected function whileRun(int $mod = 0);
 }

@@ -5,3 +5,4 @@
 /src/LogFile/MailUserInfoAlertConfig.php
 .php_cs.cache
 composer.lock
+*7z
